@@ -1,11 +1,13 @@
 """はむ鯖 専用画面のパネル画像（2倍解像度）を作る。
 
 出力（assets/hamu/textures/font/ に置く）:
-  panel_buy.png  … 市場の「買う」画面   (U+E000)
-  panel_sell.png … 市場の「売る」画面   (U+E001)
-  panel_list.png … 市場の一覧画面       (U+E002)
+  panel_buy_0..3.png  … 市場の「買う」画面   (U+E020〜E023)
+  panel_sell_0..3.png … 市場の「売る」画面   (U+E024〜E027)
+  panel_list_0..3.png … 市場の一覧画面       (U+E028〜E02B)
 
-画像は 352x444。gui.json では height 222 で使うので、ゲーム内では 176x222（チェスト6段の画面と同じ大きさ）になる。
+絵は 352x444 で描き、4枚（176x222）に分けて保存する。Minecraft はフォントの1文字を 256px までしか
+描けないため（v4 で 352x444 を1枚にしたら表示されなかった）。ゲーム内では合わせて 176x222
+（チェスト6段の画面と同じ大きさ）になる。
 座標はすべてゲーム内の 1 倍の値で書き、描くときに 2 倍する。
 スロット (列 c, 段 r) の枠は x=7+18c, y=17+18r から 18x18。持ち物欄は y=139 から、ホットバーは y=197 から。
 
@@ -109,12 +111,20 @@ def listing():
     return im
 
 
+def save_tiles(im, out, name):
+    """Minecraft はフォントの1文字を 256px までしか描けないので、352x444 を 176x222 の4枚に分ける。
+    並び：_0 左上、_1 右上、_2 左下、_3 右下。gui.json では高さ 111（上段 ascent 13・下段 ascent -98）で使う。"""
+    w, h = im.width // 2, im.height // 2
+    for i, (x, y) in enumerate(((0, 0), (w, 0), (0, h), (w, h))):
+        im.crop((x, y, x + w, y + h)).save(out / f"{name}_{i}.png")
+
+
 def main():
     out = Path(sys.argv[1])
     out.mkdir(parents=True, exist_ok=True)
-    trade(False).save(out / "panel_buy.png")
-    trade(True).save(out / "panel_sell.png")
-    listing().save(out / "panel_list.png")
+    save_tiles(trade(False), out, "panel_buy")
+    save_tiles(trade(True), out, "panel_sell")
+    save_tiles(listing(), out, "panel_list")
 
 
 if __name__ == "__main__":
